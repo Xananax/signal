@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+	  "target": "es6"
+	, "module": "es6"
+	, "sourceMap": true
+	, "jsx": "react"
+	,	"moduleResolution":"node"
+	}
+,	"filesGlob": [
+		"./src/**/*.ts"
+	,	"./test/**/*.ts"
+	,	"./typings/main.d.ts"
+	,	"./typings/process.d.ts"
+	,	"./typings/tsd.d.ts"
+	]
+,	"exclude": [
+		"node_modules"
+	,	"typings/browser"
+	,	"typings/browser.d.ts"
+	]
+}

@@ -1,0 +1,19 @@
+{
+	"folders": [{
+		"path": "."
+	,	"folder_exclude_patterns": [
+			"node_modules"
+		,	".vscode"
+		,	"typings"
+		]
+	,	"file_exclude_patterns": [
+			"tsconfig.json"
+		,	"webpack.config.js"
+		,	"*.sublime-*"
+		,	".babelrc"
+		,	".gitignore"
+		,	".npmignore"
+		,	"typings.json"
+		]
+	}]
+}
