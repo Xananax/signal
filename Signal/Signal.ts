@@ -168,7 +168,7 @@ export const createSignal = function(dependencies:Signal<any,any>[],fn?:SignalFu
 }
 
 export const Signal:SignalFactory = function(value?:any,fn?:SignalFunctor<any,any>,run:boolean=true){
-	if(Array.isArray(value) && value[0].isSignal){
+	if(Array.isArray(value) && typeof value[0] != 'undefined' && value[0].isSignal){
 		const s = createSignal(value,fn);
 		if(depsResolved(s) && fn){
 			s(s.value);

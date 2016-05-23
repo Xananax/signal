@@ -34,7 +34,6 @@ export default function test(mountAt:HTMLElement=document.body){
 	d.map(value=>{
 		str+=`${count}: ${value}\n`;
 		count++;
-		console.log(str);
 		text(str);
 	});
 

@@ -27,7 +27,6 @@ export default function test(mountAt:HTMLElement=document.body){
 	
 	const correctClicks = clicks
 		.reduce(function(char:string,index:number):number{
-			console.log('hm?',char,index);
 			return magicSeq[index] === char ? index + 1
 					: magicSeq[0] === char ? 1
 										: 0;

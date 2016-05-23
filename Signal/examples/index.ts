@@ -1,4 +1,4 @@
-//import tetris from './tetris';
+import tetris from './tetris';
 import click from './click';
 import diamond from './diamond';
 import secret_combination from './secret_combination';
