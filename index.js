@@ -1,3 +1,2 @@
-import './Signal';
-
-if(module && module.hot){module.hot.accept();}
+import './Signal/examples/index';
+//if(module && module.hot){module.hot.accept();}
