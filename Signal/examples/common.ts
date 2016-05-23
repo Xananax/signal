@@ -1,7 +1,7 @@
 /// <reference path="../Signal.d.ts" />
 
 interface SignalsForInputs{
-	[name:string]:Signal;
+	[name:string]:Signal<any,any>;
 }
 
 export function createButton(label:string,listener:EventListener):HTMLButtonElement{
@@ -67,7 +67,7 @@ export function wrap(fn:Function){
 	document.body.appendChild(wrapper);
 }
 
-export function createInput(name:string,type:string,signal:Signal):HTMLDivElement{
+export function createInput(name:string,type:string,signal:Signal<any,any>):HTMLDivElement{
 	const input = document.createElement('input');
 	input.type = type;
 	input.id = name;
@@ -83,7 +83,7 @@ export function createInput(name:string,type:string,signal:Signal):HTMLDivElemen
 	return container;
 }
 
-function createEventListener(s:Signal,type:string){
+function createEventListener(s:Signal<any,any>,type:string){
 	return function listener(evt:Event){
 		const target = evt.target as HTMLInputElement;
 		if(type == 'number'){			

@@ -1,82 +1,39 @@
-interface Functor{
-	(arg?:any,previousArg?:any):any;
+interface SignalFunctor<IN,OUT>{
+	(value:IN,previous:OUT):OUT;
 }
 
-interface TypedFunctor<IN,OUT> extends Functor{
-	(arg:IN,previousArg:OUT):OUT;
+interface SignalListener<IN>{
+	(arg:IN,previousArg:IN):any;
 }
 
-interface Listener extends Functor{
-	(arg?:any,previousArg?:any):void;
+interface SignalFilter<IN>{
+	(arg:IN,previousArg:IN):boolean;
 }
 
-interface TypedListener<IN,OUT> extends TypedFunctor<IN,OUT>{
-	(arg:IN,previousArg:OUT):void;
-}
-
-interface Filter{
-	(arg?:any,previousArg?:any):boolean;
-}
-
-interface SignalOptions{
-	fn?:Functor;
-	value?:any;
-	depsMet?:boolean;
-	isSignal?:boolean;
-	skipSimilar?:boolean;
-	dependencies?:Signal[];
-	dependents?:Signal[];
-	listeners?:Listener[];
-}
-
-interface Signal{
-	():any
-	(arg:any):Signal;
-	(arg?:any):any;
-	add(fn:Signal|Listener):Signal;
-	remove(fn:Signal|Listener):Signal;
-	map(fn:Functor):Signal;
-	filter(fn:Filter):Signal;
-	reduce(fn:Functor,initialValue?:any):Signal;
-	endsOn(endSignal:Signal):Signal;
-	toString():string;
-	triggerValue(val:any):boolean;
-	processValue(val:any):any;
-	pause(val:boolean):Signal;
-	dispatchChange(val:any,previousValue:any):boolean;
-	debug():string;
+interface Signal<IN,OUT>{
+	():OUT
+	(arg:IN):Signal<IN,OUT>
+	add(listener:(value:IN,previous:OUT)=>void):Signal<IN,OUT>
+	addDependency(s:Signal<OUT,any>):Signal<IN,OUT>
+	pause(doPause:boolean):Signal<IN,OUT>;
+	map<O>(fn:(value:OUT,previous)=>O):Signal<O,O>;
+	reduce<O>(fn:(value:OUT,previous)=>O,initialValue?:O):Signal<O,O>;
+	filter(fn:SignalFilter<OUT>):Signal<OUT,OUT>
+	endsOn(endSignal:Signal<any,any>):Signal<IN,OUT>
+	skipSimilar(doFilter:boolean):Signal<IN,OUT>
 	dispose():void;
-	get?:Function;
-	set?:Function;
-	disposed:boolean;
-	isPaused:boolean;
-	fn?:Functor;
-	changed:string|number;
-	value:any;
-	depsMet:boolean;
-	isSignal:boolean;
-	skipSimilar:boolean;
-	dependencies:Signal[];
-	onDispose:Function[];
-	dependents:Signal[];
-	listeners:Listener[];
-}
-
-interface TypedSignal<IN,OUT> extends Signal{
-	():OUT;
-	(arg:IN):Signal;
 	value:OUT;
+	delegate?:Signal<IN,OUT>
+	isSignal:boolean;
+	depsMet:boolean;
+	dependencies:Signal<any,any>[];
+	dependents:Signal<any,any>[];
 }
 
 interface SignalFactory{
-	():Signal;
-	<IN>(value:IN):TypedSignal<IN,IN>;
-	(dependencies:Dependencies,fn:Functor):Signal
-	<IN,OUT>(value:IN,fn?:TypedFunctor<IN,any>):TypedSignal<IN,OUT>;
+	():Signal<any,any>;
+	<IN>(value:IN):Signal<IN,IN>;
+	(dependencies:Signal<any,any>[]):Signal<any[],any>;
+	<OUT>(dependencies:Signal<any,any>[],fn:(value:any[],previous)=>OUT,run?:boolean):Signal<any[],OUT>;
+	<IN,OUT>(value:IN,fn:(value:IN,previous)=>OUT,run?:boolean):Signal<IN,OUT>;
 }
-
-interface Signals{
-	[name:string]:Signal;
-}
-
-type Dependencies = Signals | Signal[]; 

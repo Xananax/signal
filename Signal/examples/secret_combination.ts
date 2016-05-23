@@ -1,9 +1,6 @@
 /// <reference path="../Signal.d.ts" />
 
 import {Signal} from '../Signal';
-import {PacketedSignal} from '../lib/PacketedSignal';
-import {LiftedSignal} from '../lib/LiftedSignal';
-import {SampledSignal} from '../lib/SampledSignal';
 import {createTestChamber,createButton} from './common';
 import {TickSignal} from '../lib/TickSignal';
 
@@ -13,7 +10,7 @@ export default function test(mountAt:HTMLElement=document.body){
 	const seqLen = magicSeq.length;
 	const maxTime = 5000;
 
-	const clicks = Signal();
+	const clicks = Signal('');
 	const btnA = createButton('A',clicks.bind(null,'a'));
 	const btnB = createButton('B',clicks.bind(null,'b'));
 	const btnReset = createButton('Reset',reset);
@@ -26,9 +23,11 @@ export default function test(mountAt:HTMLElement=document.body){
 		container.appendChild(btnB);
 		container.appendChild(btnReset);
 	},mountAt);
-
+	
+	
 	const correctClicks = clicks
-		.reduce(function(char,index){
+		.reduce(function(char:string,index:number):number{
+			console.log('hm?',char,index);
 			return magicSeq[index] === char ? index + 1
 					: magicSeq[0] === char ? 1
 										: 0;

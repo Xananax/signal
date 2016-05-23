@@ -13,9 +13,10 @@ export default function test(mountAt:HTMLElement=document.body){
 	},mountAt);
 
 	const groupedClicks = BufferedSignal(clickStream)
+		.add(c=>console.log(c.length))
 		.map(clicks=>clicks.length)
 		.map(clicks=>(clicks?
 			(clicks==1 ? 'you clicked one time' : `you clicked ${clicks} times`):
 			'click the button rapidly')
-		).map(text);	
+		).map(text);
 }

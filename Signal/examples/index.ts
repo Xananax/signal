@@ -1,15 +1,15 @@
-import tetris from './tetris';
+//import tetris from './tetris';
 import click from './click';
 import diamond from './diamond';
 import secret_combination from './secret_combination';
 import sum from './sum';
 import {wrap} from './common'
 
+wrap(secret_combination);
 wrap(click);
 wrap(diamond);
-wrap(secret_combination);
 wrap(sum);
-wrap(tetris);
+//wrap(tetris);
 
 interface Windows extends Window{
 	hljs:{

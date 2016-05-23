@@ -1,21 +1,25 @@
 /// <reference path="../Signal.d.ts" />
-import {SKIP,createDependentSignal,setSignalValueAndDispatch} from '../Signal';
+import {SKIP,createSignal} from '../Signal';
 
-export function PacketedSignal(s:Signal,duration:number=250,bufferSize:number=1):Signal{
+export function PacketedSignal<T>(s:Signal<any,T>,duration?:number,bufferSize?:number):Signal<T,T[]>;
+export function PacketedSignal(s:Signal<any,any>,duration:number=250,bufferSize:number=1):Signal<any,any[]>{
+	
 	let timer;
 	let buffer = [];
-	const signal = createDependentSignal(s);
-	signal.value = [];
-	const trigger = function(){
+	
+	function trigger(){
 		buffer = buffer.slice(1,bufferSize+1);
 		const val = buffer;
-		setSignalValueAndDispatch(signal,val);
+		signal(val);
 	}
-	signal.fn = function(s){
+	
+	const signal = createSignal([s],function(s){
 		buffer = buffer.concat(s);
 		clearTimeout(timer);
 		timer = setTimeout(trigger,duration);
 		return SKIP;
-	}
+	})
+	signal.value = [];
+	
 	return signal;
 }

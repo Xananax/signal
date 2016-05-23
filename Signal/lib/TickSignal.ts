@@ -1,29 +1,31 @@
 /// <reference path="../Signal.d.ts" />
-import {SKIP,createDependentSignal,setSignalValueAndDispatch} from '../Signal';
+import {SKIP,createSignal} from '../Signal';
 
 function now():number{
 	return (performance && performance.now()) || (Date.now());
 }
 
-export function TickSignal(s:Signal,duration:number=250):Signal{
+export function TickSignal(s:Signal<any,any>,duration:number=250):Signal<any,number>{
+	
 	let timer;
 	let start:number = 0;
 	let delta:number = 0;
-	const signal = createDependentSignal(s);
-	signal.value = 0;
-	signal.depsMet = false;
-	const trigger = function(){
+	
+	function trigger(){
 		const current = now();
 		delta = current - start;
 		start = current;
-		signal.depsMet = true;
-		setSignalValueAndDispatch(signal,delta);
+		signal(delta);
 	}
-	signal.fn = function(s){
+	
+	const signal = createSignal([]);
+	signal.addDependency(s);
+	s.add(function(s){
 		start = now();
 		clearTimeout(timer);
 		timer = setTimeout(trigger,duration);
-		return SKIP;
-	}
+	})
+	signal.value = 0;
+	
 	return signal;
 }
