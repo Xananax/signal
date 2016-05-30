@@ -30,6 +30,7 @@ export function createTestChamber(label:string,process?:(container:HTMLElement)=
 		process(container);
 	}
 	const text = document.createElement('pre');
+	text.style.fontFamily = 'monospace';
 	container.appendChild(text);
 	appendTo.appendChild(container);
 	return function(str){

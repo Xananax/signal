@@ -2,7 +2,7 @@
 
 import {Signal} from '../Signal';
 import {createTestChamber,createButton} from './common';
-import {TickSignal} from '../lib/TickSignal';
+import {TimedSignal} from '../lib/TimedSignal';
 
 
 export default function test(mountAt:HTMLElement=document.body){
@@ -42,5 +42,5 @@ export default function test(mountAt:HTMLElement=document.body){
 		btnReset.disabled = true;
 	});
 		
-	const timedSignal = TickSignal(correctClicks,maxTime).endsOn(success).add(reset);	
+	const timedSignal = TimedSignal(correctClicks,maxTime).endsOn(success).add(reset);	
 }

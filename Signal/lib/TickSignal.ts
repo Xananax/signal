@@ -1,31 +1,39 @@
 /// <reference path="../Signal.d.ts" />
-import {SKIP,createSignal} from '../Signal';
+import {
+	SKIP
+,	createSignal
+,	invalidateDependents
+,	depsResolved
+,	applySignalValue
+} from '../Signal';
+import {now} from './utils';
 
-function now():number{
-	return (performance && performance.now()) || (Date.now());
-}
-
-export function TickSignal(s:Signal<any,any>,duration:number=250):Signal<any,number>{
+export function TickSignal(every:number=100,nowFn:SignalTimeProvider=now):Signal<number,number>{
 	
-	let timer;
-	let start:number = 0;
-	let delta:number = 0;
+	const s = createSignal([]);
+	s.value = 0;
+	s.depsMet = true;
+	s.delegate = delegate;
+	let timer = null;
+	let counter = 0;
 	
-	function trigger(){
-		const current = now();
-		delta = current - start;
-		start = current;
-		signal(delta);
+	function delegate(time:number){
+		every = time;
+		return SKIP;
 	}
 	
-	const signal = createSignal([]);
-	signal.addDependency(s);
-	s.add(function(s){
-		start = now();
-		clearTimeout(timer);
-		timer = setTimeout(trigger,duration);
-	})
-	signal.value = 0;
-	
-	return signal;
+	function trigger(){
+		invalidateDependents(s);
+		if(s.isPaused || !depsResolved(s)){return tick(every);}
+		applySignalValue(s,counter++,s.value,s.skipSame);
+		tick(every);
+	}
+	function tick(every){
+		timer = setTimeout(trigger,every);
+	}
+	s.onDispose.push(
+		()=>clearTimeout(timer)
+	);
+	tick(every);
+	return s;
 }

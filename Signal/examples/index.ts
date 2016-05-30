@@ -1,14 +1,17 @@
+import {wrap} from './common';
+
+import snake from './snake';
 import tetris from './tetris';
 import click from './click';
 import diamond from './diamond';
 import secret_combination from './secret_combination';
 import sum from './sum';
-import {wrap} from './common'
 
 wrap(secret_combination);
 wrap(click);
 wrap(diamond);
 wrap(sum);
+wrap(snake);
 //wrap(tetris);
 
 interface Windows extends Window{
