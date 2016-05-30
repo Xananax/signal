@@ -1,6 +1,6 @@
 # Signal
 
-Reactive values
+Reactive values  
 Alternatives: [flyd](https://github.com/paldepind/flyd),  [MobX](https://github.com/mobxjs/mobx), or just use [Elm](elm-lang.org).
 
 ## Motivation
