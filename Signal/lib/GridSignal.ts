@@ -7,7 +7,9 @@ import {
 ,	depsResolved
 ,	applySignalValue
 } from '../Signal';
-
+import {
+	random
+} from './utils';
 
 export function makeArray(size:number,fill:(index:number)=>number):number[];
 export function makeArray(size:number,fill:(index:number)=>number[]):Grid;
@@ -132,6 +134,21 @@ interface GridSignalResizeEntry extends Array<any>{
 }
 type GridSignalEntry =  GridSignalCellEntry | GridSignalMergeEntry | GridSignalResizeEntry; 
  
+ 
+export function getEmptyCell(grid:Grid):[number,number]{
+	const height = grid.length;
+	const width = grid[0].length;
+	let x = random(width);
+	let y = random(height);
+	let trials = width*height;
+	while(grid[y][x] > 0 && trials){
+		x = random(width);
+		y = random(height);
+		trials--;
+	}
+	if(!trials){throw new Error(`Could not find an empty position!`)}
+	return [x,y];
+}
 
 export function GridSignal(width:number,height:number):Signal<GridSignalEntry,Grid>{
 	

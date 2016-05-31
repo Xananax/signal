@@ -3,9 +3,11 @@
 import {Signal,CHANGED,SKIP} from '../../Signal';
 import {KeyboardSignal,GroupedKeyboardSignals} from '../../lib/KeyboardSignal';
 import {TickSignal} from '../../lib/TickSignal';
-import {GridSignal,gridToString,makeGrid} from '../../lib/GridSignal';
+import {TimedSignal} from '../../lib/TimedSignal';
+import {BranchingSignal} from '../../lib/BranchingSignal';
+import {GridSignal,gridToString,makeGrid,getEmptyCell} from '../../lib/GridSignal';
 import {createTestChamber} from '../common';
-import {random} from './utils';
+import {sound} from './utils';
 
 export default function test(mountAt:HTMLElement=document.body){
 
@@ -47,27 +49,20 @@ export default function test(mountAt:HTMLElement=document.body){
 	,	'X'
 	];
 
-	const tick = TickSignal(loopInterval);
-
-	const state = Signal(STATE.PLAYING,function(state){
-		if(state == STATE.PLAYING){tick.pause(false);}
-		else{tick.pause(true);}
-		if(state == STATE.DEAD){
-			setTimeout(deadGrid,100);
-		}
-		return state;	
-	});
-
 	function reset(){
+		sound('start');
 		const newGrid = makeGrid(width,height);
 		board([newGrid]);
 		buffer.length = 0;
 		x(startPosX);
 		y(startPosY);
-		score(0);
+		tick(loopInterval);
+		apples(0);
+		score([0,null]);
 	}
 
 	function deadGrid(){
+		sound('death');
 		const newGrid = makeGrid(width,height,CELLS.WALL);
 		board([newGrid]);
 	}
@@ -87,59 +82,55 @@ export default function test(mountAt:HTMLElement=document.body){
 		return true;
 	}
 	
-	function getEmptyPosition(){
-		let x = random(width);
-		let y = random(height);
-		let curr = board();
-		let trials = 1000
-		while(curr[y][x] > 0 && trials){
-			x = random(width);
-			y = random(height);
-			trials--;
-		}
-		if(!trials){
-			throw new Error(`Could not find an empty position!`)
-		}
-		return [x,y];
-	}
-	
 	function addWall(){
-		const [x,y] = getEmptyPosition();
+		const [x,y] = getEmptyCell(board());
 		board([CELLS.WALL,x,y]);
 	}
-
+	
+	function isDeadlyCell(cell:number,x:number,y:number,width:number,height:number){
+		return (cell > CELLS.APPLE || x < 0 || y < 0 || x >= width || y >= height)
+	}
+	
 	const controller = GroupedKeyboardSignals(keyCodes);
-
 	const x = Signal(startPosX);
 	const y = Signal(startPosY);
-
+	const board = GridSignal(width,height);
+	
 	const direction = controller.map(function(keys,previous){
 		if(!keys[CHANGED]){return startingDirection;}
 		const current = keys[CHANGED] && keys[keys[CHANGED]];
 		if(!current || !current.on){return SKIP;}
 		const name = current.name;
 		switch(name){
-			case 'left':return DIR.LEFT;
-			case 'up':return DIR.UP;
-			case 'right': return DIR.RIGHT;
-			case 'down': return DIR.DOWN;
-			case 'space': return toggleState() && previous;
+			case 'left':
+				if(previous!==DIR.RIGHT){return DIR.LEFT;}
+				return previous;
+			case 'up':
+				if(previous!==DIR.DOWN){return DIR.UP;}
+				return previous;
+			case 'right':
+				if(previous!==DIR.LEFT){return DIR.RIGHT;}
+				return previous;
+			case 'down':
+				if(previous!==DIR.UP){return DIR.DOWN;}
+				return previous;
+			case 'space':
+				toggleState();
+				return previous;
 			default: return startingDirection;
 		}
 	});
 
-	tick.add(function(){
+	const tick = TickSignal(loopInterval).add(function(){
 		const dir = direction();
 		if(dir == DIR.LEFT){x(x()-1)}
 		else if(dir == DIR.RIGHT){x(x()+1)}
 		else if(dir == DIR.UP){y(y()-1)}
 		else if(dir == DIR.DOWN){y(y()+1)}	
-	})
-
-	const board = GridSignal(width,height);
-
-	const score = Signal(0,function(n){
-		const [x,y] = getEmptyPosition();
+	});
+	
+	const apples = Signal(0,function(n){
+		const [x,y] = getEmptyCell(board());
 		board([CELLS.APPLE,x,y]);
 		if(n > 1){
 			const timer = loopInterval - n * 10;
@@ -148,61 +139,85 @@ export default function test(mountAt:HTMLElement=document.body){
 		}
 		return n;
 	});
+	
 
-	const head = Signal([x,y],function(coordinates,previous){
-		
-		const [x,y] = coordinates;
-		
-		const grid = board();
-		const cell = grid[y] && grid[y][x];
-		
-		if(cell > CELLS.APPLE || x < 0 || y < 0 || x >= width || y >= height){
-			state(STATE.DEAD);
-			return previous;
+	const bonus = TimedSignal(apples,30,100).map(n=>100-n);
+	
+	const score = Signal([apples],function([apples,changed],previous){
+		if(previous==null || changed==null){
+			return 0;
 		}
-		
-		if(cell == CELLS.APPLE){score(score()+1);}
-		
-		return coordinates;
+		const b = (apples > 0) && bonus() || 0;
+		return previous + 10 + b;
+	});
+	
+	const highestScore = Signal([score],function([score],previous){
+		if(!previous){return score;}
+		return Math.max(previous,score);
+	})
+	
+	const state = BranchingSignal(STATE.PLAYING,{
+		[STATE.PLAYING]:()=>tick.pause(false)
+	,	[STATE.PAUSED]:()=>tick.pause(true)
+	,	[STATE.DEAD]:()=>{tick.pause(true);setTimeout(deadGrid,100)}
 	});
 
 	const buffer = [];
 	
-	const snake = Signal([head],function(current,previous){
-		const [[x,y]] = current;
-		const s = score();
+	const snake = Signal([x,y],function(coordinates,previous){
+		
+		const [x,y] = coordinates;
+		
+		const grid = board();
+		
+		const cell = grid[y] && grid[y][x];
+		
+		if(isDeadlyCell(cell,x,y,width,height)){
+			state(STATE.DEAD);
+			return previous;
+		}
+		
+		const _apples = apples();
+		
+		if(cell == CELLS.APPLE){
+			apples(_apples+1);
+			sound('pick');
+		}else{
+			sound('walk');
+		}
+		
 		const {length} = buffer;
+		
 		buffer.unshift([x,y]);
+		
 		buffer.forEach(([x,y],i)=>{
-			const cell = (i == 0) ? CELLS.HEAD :
-				 (i == length) ? CELLS.EMPTY : 
-				CELLS.SNAKE
-			;
+			const cell = (i == 0)?CELLS.HEAD:(i == length)?CELLS.EMPTY:CELLS.SNAKE;
 			board([cell,x,y]);
 		});
-		if(length > s + 2){buffer.pop();}
-		return current;
+		
+		if(length > _apples + 2){buffer.pop();}
+		
+		return coordinates;
 	})
 
 	const text = createTestChamber('Snake',function(container:HTMLElement){
 		const stateText = document.createElement('div');
-		stateText.innerText = '';
-		const scoreText = document.createElement('div');
-		scoreText.innerText = '';
+		const statusText = document.createElement('div');
 		state.map(function(state){
 			stateText.innerText = state == STATE.DEAD ? 'DEAD! Press space to try again' : 
 			state == STATE.PAUSED ? '- paused - ' : 
 			`catch all the ${CELLSREPRESENTATION[CELLS.APPLE]}, avoid the ${CELLSREPRESENTATION[CELLS.WALL]}!` 
+		});
+		Signal([score,highestScore,bonus],function([score,highestScore,bonus]){
+			statusText.innerHTML = `score: ${score}<br/>highest: ${highestScore}<br/>bonus: ${bonus|0}`;
 		})
-		score.map(function(score){
-			scoreText.innerText = `Score: ${score}`;
-		})
+		
 		container.appendChild(stateText);
-		container.appendChild(scoreText);
+		container.appendChild(statusText);
+		
 	},mountAt);
 
-	board.map(a=>{
-		text(gridToString(a,CELLSREPRESENTATION));
-	})
+	sound('start');
+	board.map(a=>gridToString(a,CELLSREPRESENTATION)).map(text);
 
 };

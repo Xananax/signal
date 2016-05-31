@@ -16,3 +16,7 @@ export function shouldTriggerToggleSignal(index:number,ons:boolean[],s:ToggleSig
 	}
 	s(bool);
 }
+
+export function random(max:number,min:number=0,rand:()=>number=Math.random):number{
+	return Math.floor(rand() * max) + min;  
+}
