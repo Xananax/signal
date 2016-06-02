@@ -47,6 +47,7 @@ export function TickSignal(every:number=100,nowFn:SignalTimeProvider=now):TickSi
 		);
 	}
 	function stop(){
+		started = false;
 		clearTimeout(timer);
 	}
 	s.onPause.push(stop);

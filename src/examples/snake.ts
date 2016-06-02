@@ -35,7 +35,7 @@ export default function test(mountAt:HTMLElement=document.body){
 	const height = 20;
 	const startPosX = Math.round(width/2);
 	const startPosY = Math.round(height/2);
-	const loopInterval = 300;
+	const loopInterval = 200;
 	const startingDirection = DIR.UP;
 
 	const sounds:{[key:string]:[string,number]}= {
@@ -65,7 +65,7 @@ export default function test(mountAt:HTMLElement=document.body){
 	];
 
 	const CELLSCOLORS = [
-		'gray'
+		'rgba(25,25,25,.1)'
 	,	'lime'
 	,	'red'
 	];
@@ -83,6 +83,7 @@ export default function test(mountAt:HTMLElement=document.body){
 	const canvas = canvasGrid(width,height,CELLSCOLORS);
 
 	function reset(){
+		console.log('---------------------')
 		sound('start',true);
 		const newGrid = makeGrid(width,height);
 		board([newGrid]);
@@ -222,7 +223,7 @@ export default function test(mountAt:HTMLElement=document.body){
 		board([CELLS.APPLE,x,y]);
 		if(n > 1){
 			const timer = loopInterval - n * 10;
-			//tick.delay(timer);
+			tick.delay(timer);
 			setSoundSpeed(timer)
 			addWall();
 		}
@@ -248,12 +249,14 @@ export default function test(mountAt:HTMLElement=document.body){
 	const state = BranchingSignal(STATE.PLAYING,{
 		[STATE.PLAYING]:()=>tick.pause(false)
 	,	[STATE.PAUSED]:()=>tick.pause(true)
-	,	[STATE.DEAD]:()=>{tick.pause(true);setTimeout(deadGrid,100)}
+	,	[STATE.DEAD]:()=>{tick.pause(true);deadGrid();}
 	});
 
 	const buffer = [];
 	
 	const snake = Signal([$x,$y],function(coordinates,previous){
+		
+		if(state() != STATE.PLAYING){return previous;}
 		
 		const god = power_god();
 		
@@ -268,7 +271,6 @@ export default function test(mountAt:HTMLElement=document.body){
 		
 		if(isDeadly || isOutOfBounds){			
 			if(!god){
-				console.log('dead!',x,y,cell);
 				state(STATE.DEAD);
 				return previous;
 			}
